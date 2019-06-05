@@ -1,13 +1,15 @@
-<% include partials/header %>
+<%- include("partials/header", {authRequired: false}) %>
 <div class="content" style="position: fixed !important">
     <div class="half blue">
 
     </div>
     <form id="login">
         <h1 id="main">MlHub²</h1>
-        <h2 id="message">Enter Server Verification Key</h2>
-        <input type="password" id="key" placeholder="Enter key"><br>
-        <input type="submit" value="Log In">
+        <div id="form-content">
+            <h2 id="message">Enter Server Verification Key</h2>
+            <input type="password" id="key" placeholder="Enter key"><br>
+            <input type="submit" id="submit-button" value="Log In">
+        </div>
     </form>
 </div>
 <% include partials/footer %>

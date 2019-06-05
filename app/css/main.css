@@ -44,7 +44,7 @@ form#login label {
     color: #1976D2;
     font-size: 14px;
 }
-form#login input[type="password"] {
+form#login input[type="password"], form#login input[type="text"] {
     padding: 12px;
     width: 275px;
     max-width: 80vw;
@@ -77,6 +77,28 @@ form#login input[type="submit"] {
     width: 100%;
     height: 50%;
 }
+.content {
+    height: 100%;
+    width: 100%;
+    display: block;
+    position: relative;
+    overflow-x: hidden;
+}
+#learn {
+    font-weight: bold;
+    font-size: 19px;
+    color: white;
+    background-color: #2196F3;
+    padding: 15px 20px;
+    border-style: hidden;
+    border-radius: 5px;
+    margin: 10px;
+    transition: 0.2s ease-in-out;
+}
+#learn:hover {
+    box-shadow: 0 0px 8px 0 rgba(0,0,0,0.1);
+    background-color: #42A5F5;
+}
 #top-bar {
     list-style-type: none;
     background-color: #2196F3;
@@ -98,13 +120,4 @@ form#login input[type="submit"] {
 }
 #close:hover {
     color: #FF8A80;
-}
-#content {
-}
-.content {
-    height: 100%;
-    width: 100%;
-    display: block;
-    position: relative;
-    overflow-x: hidden;
 }

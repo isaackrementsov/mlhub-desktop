@@ -1,6 +1,8 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import * as ejse from 'ejs-electron';
 
+import NeuralNetwork from './network/NeuralNetwork';
+
 export default class Main {
 
     static mainWindow : Electron.BrowserWindow;
@@ -30,6 +32,9 @@ export default class Main {
                 nodeIntegration: true
             }
         });
+        if(!ejse.data('validAuthKey')){
+            ejse.data('validAuthKey', false);
+        }
         ejse.listen();
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
@@ -47,8 +52,16 @@ export default class Main {
             Main.application.quit();
         });
 
-        ipcMain.on('register', () => {
+        ipcMain.on('start-learning', (e) => {
+            let network : NeuralNetwork = new NeuralNetwork();
+            network.learn();
+            e.reply('started-learning');
+        });
 
+        ipcMain.on('computer-data-request', (e, data) => {
+            ejse.data('computer', data.name);
+            ejse.data('validAuthKey', data.authKey);
+            e.reply('computer-data-added');
         });
     }
 

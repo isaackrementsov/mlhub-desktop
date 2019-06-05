@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var electron_1 = require("electron");
 var ejse = require("ejs-electron");
+var NeuralNetwork_1 = require("./network/NeuralNetwork");
 var Main = /** @class */ (function () {
     function Main() {
     }
@@ -25,6 +26,9 @@ var Main = /** @class */ (function () {
                 nodeIntegration: true
             }
         });
+        if (!ejse.data('validAuthKey')) {
+            ejse.data('validAuthKey', false);
+        }
         ejse.listen();
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
@@ -38,7 +42,15 @@ var Main = /** @class */ (function () {
         electron_1.ipcMain.on('close-main-window', function () {
             Main.application.quit();
         });
-        electron_1.ipcMain.on('register', function () {
+        electron_1.ipcMain.on('start-learning', function (e) {
+            var network = new NeuralNetwork_1.default();
+            network.learn();
+            e.reply('started-learning');
+        });
+        electron_1.ipcMain.on('computer-data-request', function (e, data) {
+            ejse.data('computer', data.name);
+            ejse.data('validAuthKey', data.authKey);
+            e.reply('computer-data-added');
         });
     };
     return Main;
