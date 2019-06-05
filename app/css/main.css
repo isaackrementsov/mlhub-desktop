@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,700&display=swap');
+
+body, html {
+    margin: 0;
+    font-family: 'Roboto', Arial, sans-serif;
+    box-shadow: 0 0px 8px 0 rgba(0,0,0,0.1);
+    height: 100%;
+    background-color: whitesmoke;
+    -webkit-app-region: drag;
+}
+button:focus, input:focus {
+    outline: none;
+}
+button, input {
+    -webkit-app-region: no-drag;
+}
+form#login {
+    box-shadow: 0 0px 8px 0 rgba(0,0,0,0.2);
+    box-sizing: border-box;
+    position: absolute;
+    padding: 20px;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-width: 95vw;
+    text-align: center;
+    background-color: white;
+    color: rgb(90,90,90);
+    border-style: hidden;
+    border-radius: 7px;
+}
+form#login input {
+    margin: 10px 0;
+}
+form#login h2 {
+    font-weight: normal;
+}
+form#login label {
+    display: block;
+    position: relative;
+    right: 117px;
+    font-weight: bold;
+    color: #1976D2;
+    font-size: 14px;
+}
+form#login input[type="password"] {
+    padding: 12px;
+    width: 275px;
+    max-width: 80vw;
+    border-style: solid;
+    border-color: lightgrey;
+    border-radius: 3px;
+    border-width: 1px;
+    background-color: transparent;
+    color: rgb(90,90,90);
+}
+form#login input[type="password"]:focus {
+    outline: none;
+}
+form#login input[type="submit"] {
+    font-weight: bold;
+    padding: 1.5vh 7vw;
+    background-color: #2196F3;
+    border-style: hidden;
+    border-radius: 3px;
+    color: white;
+    font-size: 15px;
+}
+.blue {
+    background: linear-gradient(#448AFF, #2962FF);
+    color: white;
+}
+.half {
+    position: fixed;
+    z-index: -1;
+    width: 100%;
+    height: 50%;
+}
+#top-bar {
+    list-style-type: none;
+    background-color: #2196F3;
+    margin: 0;
+    padding: 10px 20px;
+    color: white;
+}
+#top-bar li {
+    display: inline;
+}
+#close {
+    float: right;
+    background-color: transparent;
+    border-style: hidden;
+    color: white;
+    font-weight: 300;
+    font-size: 14px;
+    transition: 0.1s ease-in-out;
+}
+#close:hover {
+    color: #FF8A80;
+}
+#content {
+}
+.content {
+    height: 100%;
+    width: 100%;
+    display: block;
+    position: relative;
+    overflow-x: hidden;
+}

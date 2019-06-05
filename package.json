@@ -1,0 +1,30 @@
+{
+  "name": "mlhub-desktop",
+  "version": "1.0.0",
+  "description": "Mlhub desktop app",
+  "main": "app.ts",
+  "dependencies": {
+    "ejs-electron": "^2.0.3",
+    "electron": "^5.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && electron dist/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isaackrementsov/mlhub-desktop.git"
+  },
+  "keywords": [
+    "mlhub",
+    "desktop",
+    "app"
+  ],
+  "author": "Isaac Krementsov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/isaackrementsov/mlhub-desktop/issues"
+  },
+  "homepage": "https://github.com/isaackrementsov/mlhub-desktop#readme"
+}
