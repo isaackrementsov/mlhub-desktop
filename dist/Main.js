@@ -1,23 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var electron_1 = require("electron");
-var ejse = require("ejs-electron");
-var NeuralNetwork_1 = require("./network/NeuralNetwork");
-var Main = /** @class */ (function () {
-    function Main() {
+const electron_1 = require("electron");
+const ejse = require("ejs-electron");
+const NeuralNetwork_1 = require("./network/NeuralNetwork");
+class Main {
+    static render(filename) {
+        Main.mainWindow.loadURL(`file://${__dirname}/../app/views/${filename}.ejs`);
     }
-    Main.render = function (filename) {
-        Main.mainWindow.loadURL("file://" + __dirname + "/../app/views/" + filename + ".ejs");
-    };
-    Main.onWindowAllClosed = function () {
+    static onWindowAllClosed() {
         if (process.platform !== 'darwin') {
             Main.application.quit();
         }
-    };
-    Main.onClose = function () {
+    }
+    static onClose() {
         Main.mainWindow = null;
-    };
-    Main.onReady = function () {
+    }
+    static onReady() {
         Main.mainWindow = new Main.BrowserWindow({
             width: 800,
             height: 600,
@@ -33,27 +31,26 @@ var Main = /** @class */ (function () {
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
         Main.mainWindow.on('closed', Main.onClose);
-    };
-    Main.main = function (app, browserWindow) {
+    }
+    static main(app, browserWindow) {
         Main.BrowserWindow = browserWindow;
         Main.application = app;
         Main.application.on('window-all-closed', Main.onWindowAllClosed);
         Main.application.on('ready', Main.onReady);
-        electron_1.ipcMain.on('close-main-window', function () {
+        electron_1.ipcMain.on('close-main-window', () => {
             Main.application.quit();
         });
-        electron_1.ipcMain.on('start-learning', function (e) {
-            var network = new NeuralNetwork_1.default();
+        electron_1.ipcMain.on('start-learning', (e) => {
+            let network = new NeuralNetwork_1.default();
             network.learn();
             e.reply('started-learning');
         });
-        electron_1.ipcMain.on('computer-data-request', function (e, data) {
+        electron_1.ipcMain.on('computer-data-request', (e, data) => {
             ejse.data('computer', data.name);
             ejse.data('validAuthKey', data.authKey);
             e.reply('computer-data-added');
         });
-    };
-    return Main;
-}());
+    }
+}
 exports.default = Main;
 //# sourceMappingURL=Main.js.map

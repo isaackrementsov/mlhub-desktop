@@ -4,12 +4,15 @@
   "description": "Mlhub desktop app",
   "main": "app.ts",
   "dependencies": {
+    "@types/node": "^12.0.5",
     "ejs-electron": "^2.0.3",
-    "electron": "^5.0.2"
+    "electron": "^5.0.2",
+    "ts-node": "^8.2.0",
+    "typescript": "^3.5.1"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsc && ts-node src/network/test.ts",
     "build": "tsc && electron dist/app.js"
   },
   "repository": {
