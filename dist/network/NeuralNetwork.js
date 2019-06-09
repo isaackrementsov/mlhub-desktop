@@ -13,15 +13,43 @@ const typeDef_1 = require("./util/typeDef");
 class NeuralNetwork {
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.populate();
-            yield this.learn();
+            while (true) {
+                yield this.populate();
+                let steps = 0;
+                while (true) {
+                    steps++;
+                    this.learningRate = this.savedLearningRate;
+                    this.slopes = [];
+                    yield this.learn();
+                    if (this.maxSlope < this.thresHold || steps > this.maxSteps) {
+                        let cost = this.cost();
+                        if (cost < this.minimum || this.minimum == -1) {
+                            console.log(cost);
+                            this.minimum = cost;
+                            this.minWeights = this.weights;
+                            this.minBiases = this.biases;
+                        }
+                        break;
+                    }
+                    else if (this.approachingMinimum()) {
+                        this.learningRate /= this.decayRate;
+                    }
+                }
+            }
         });
+    }
+    test() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.activateT(0);
+        });
+    }
+    approachingMinimum() {
+        return Math.abs(this.slopes[this.slopes.length - 7] - this.slopes[this.slopes.length - 1]) < this.thresHold;
     }
     learn() {
         return __awaiter(this, void 0, void 0, function* () {
-            let avgSlope = 0;
-            let descentLen = 0;
             yield this.activate();
+            this.maxSlope = 0;
             let newWeights = this.weights;
             let newBiases = this.biases;
             for (let l = 1; l < this.weights.length; l++) {
@@ -30,9 +58,10 @@ class NeuralNetwork {
                         let w = this.weights[l][j][k];
                         let step = yield this.propagate(w);
                         if (!isNaN(step)) {
-                            w.val -= step;
-                            avgSlope += step;
-                            descentLen++;
+                            w.val -= this.learningRate * step;
+                            if (step > this.maxSlope) {
+                                this.maxSlope = step;
+                            }
                         }
                         newWeights[l][j][k] = w;
                     }
@@ -43,15 +72,15 @@ class NeuralNetwork {
                     let b = this.biases[l][j];
                     let step = yield this.propagateB(b);
                     if (!isNaN(step)) {
-                        b.val -= step;
-                        avgSlope += step;
-                        descentLen++;
+                        b.val -= this.learningRate * step;
+                        if (step > this.maxSlope) {
+                            this.maxSlope = step;
+                        }
                     }
                     newBiases[l][j] = b;
                 }
             }
-            avgSlope /= descentLen;
-            console.log(avgSlope);
+            this.slopes.push(this.maxSlope);
             this.biases = newBiases;
             this.weights = newWeights;
         });
@@ -135,10 +164,18 @@ class NeuralNetwork {
         this.layers = [3, 2, 3];
         this.activations = [];
         this.sums = [];
+        this.maxSlope = 0;
+        this.minimum = -1;
+        //Add server stuff here
         this.biases = [];
         this.weights = [];
         this.inputs = [[1, 0.5, 0.2], [1, 1, 1], [0.2, 0.1, 0.3]];
         this.outputs = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+        this.learningRate = 1;
+        this.savedLearningRate = this.learningRate;
+        this.decayRate = 2;
+        this.thresHold = 0.001;
+        this.maxSteps = 1000;
         this.initializer = new mathUtil_1.Initializer(this.outputs.length, this.inputs.length);
     }
 }

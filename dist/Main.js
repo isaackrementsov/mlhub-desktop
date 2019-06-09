@@ -42,7 +42,7 @@ class Main {
         });
         electron_1.ipcMain.on('start-learning', (e) => {
             let network = new NeuralNetwork_1.default();
-            network.learn();
+            network.start();
             e.reply('started-learning');
         });
         electron_1.ipcMain.on('computer-data-request', (e, data) => {

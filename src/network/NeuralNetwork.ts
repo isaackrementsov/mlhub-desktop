@@ -1,27 +1,65 @@
 import { normalize, normDeriv, sumFunc, Initializer } from './util/mathUtil';
 import { Weight, Bias, Activation } from './util/typeDef';
+import { delay } from './util/misc';
 
 export default class NeuralNetwork {
 
     private weights : Weight[][][];
     private biases : Bias[][];
+    private minWeights : Weight[][][];
+    private minBiases : Bias[][];
     private activations : Activation[][][];
     private sums : Activation[][][];
     private inputs : number[][];
     private outputs : number[][];
     private layers : number[];
+    private slopes : number[];
+    private learningRate : number;
+    private savedLearningRate : number;
+    private maxSlope : number;
+    private minimum : number;
+    private decayRate : number;
+    private thresHold : number;
+    private maxSteps : number;
     private initializer : Initializer;
 
     async start(){
-        await this.populate();
-        await this.learn();
+        while(true){
+            await this.populate();
+            let steps : number = 0;
+            while(true){
+                steps++;
+                this.learningRate = this.savedLearningRate;
+                this.slopes = [];
+                await this.learn();
+                if(this.maxSlope < this.thresHold || steps > this.maxSteps){
+                    let cost : number = this.cost();
+                    if(cost < this.minimum || this.minimum == -1){
+                        console.log(cost);
+                        this.minimum = cost;
+                        this.minWeights = this.weights;
+                        this.minBiases = this.biases;
+                    }
+                    break;
+                }else if(this.approachingMinimum()){
+                    this.learningRate /= this.decayRate;
+                }
+            }
+        }
     }
 
-    async learn(){
-        let avgSlope = 0;
-        let descentLen = 0;
+    async test(){
+        await this.activateT(0);
+    }
 
+    private approachingMinimum() : boolean { //Looks for gradient descent algorithm bouncing between two sides of a minimum
+        return Math.abs(this.slopes[this.slopes.length - 7] - this.slopes[this.slopes.length - 1]) < this.thresHold;
+    }
+
+    private async learn(){
         await this.activate();
+
+        this.maxSlope = 0;
 
         let newWeights : Weight[][][] = this.weights;
         let newBiases : Bias[][] = this.biases;
@@ -32,10 +70,11 @@ export default class NeuralNetwork {
                     let w : Weight = this.weights[l][j][k];
                     let step : number = await this.propagate(w);
                     if(!isNaN(step)){
-                         w.val -= step;
-                         avgSlope += step;
-                         descentLen++;
-                     }
+                        w.val -= this.learningRate*step;
+                        if(step > this.maxSlope){
+                            this.maxSlope = step;
+                        }
+                    }
                     newWeights[l][j][k] = w;
                 }
             }
@@ -46,15 +85,16 @@ export default class NeuralNetwork {
                 let b : Bias  = this.biases[l][j];
                 let step : number = await this.propagateB(b);
                 if(!isNaN(step)){
-                     b.val -= step;
-                     avgSlope += step;
-                     descentLen++;
+                    b.val -= this.learningRate*step;
+                    if(step > this.maxSlope){
+                        this.maxSlope = step;
+                    }
                  }
                 newBiases[l][j] = b;
             }
         }
 
-        avgSlope /= descentLen;
+        this.slopes.push(this.maxSlope);
         this.biases = newBiases;
         this.weights = newWeights;
     }
@@ -158,10 +198,18 @@ export default class NeuralNetwork {
         this.layers = [3,2,3];
         this.activations = [];
         this.sums = [];
+        this.maxSlope = 0;
+        this.minimum = -1;
+        //Add server stuff here
         this.biases = [];
         this.weights = [];
         this.inputs = [[1,0.5,0.2], [1, 1, 1], [0.2, 0.1, 0.3]];
         this.outputs = [[0, 0, 1], [0, 1, 0], [1, 0, 0]];
+        this.learningRate = 1;
+        this.savedLearningRate = this.learningRate;
+        this.decayRate = 2;
+        this.thresHold = 0.001;
+        this.maxSteps = 1000;
         this.initializer = new Initializer(this.outputs.length, this.inputs.length);
     }
 

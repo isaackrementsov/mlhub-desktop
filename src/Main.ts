@@ -54,7 +54,7 @@ export default class Main {
 
         ipcMain.on('start-learning', (e) => {
             let network : NeuralNetwork = new NeuralNetwork();
-            network.learn();
+            network.start();
             e.reply('started-learning');
         });
 
