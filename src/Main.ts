@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain } from 'electron';
 import * as ejse from 'ejs-electron';
 
 import NeuralNetwork from './network/NeuralNetwork';
+import Storage from './web/Storage';
 
 export default class Main {
 
@@ -32,10 +33,10 @@ export default class Main {
                 nodeIntegration: true
             }
         });
-        if(!ejse.data('validAuthKey')){
-            ejse.data('validAuthKey', false);
-        }
+
+        ejse.data('validAuthKey', Storage.instance.get('validAuthKey', true));
         ejse.listen();
+        
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
         Main.mainWindow.on('closed', Main.onClose);
@@ -61,6 +62,10 @@ export default class Main {
         ipcMain.on('computer-data-request', (e, data) => {
             ejse.data('computer', data.name);
             ejse.data('validAuthKey', data.authKey);
+
+            Storage.instance.set('computer', data.name, false);
+            Storage.instance.set('validAuthKey', data.authKey, true);
+
             e.reply('computer-data-added');
         });
     }

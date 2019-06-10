@@ -116,7 +116,7 @@ class NeuralNetwork {
             this.sums[t][l] = [];
             if (l == 0) {
                 for (let j = 0; j < this.inputs[t].length; j++) {
-                    let inp = new typeDef_1.Activation(j, l, this.inputs[t][j]);
+                    let inp = new typeDef_1.Activation(j, l, mathUtil_1.normalize(this.inputs[t][j]));
                     this.activations[t][l][j] = inp;
                     this.sums[t][l][j] = inp;
                 }
@@ -174,8 +174,8 @@ class NeuralNetwork {
         this.learningRate = 1;
         this.savedLearningRate = this.learningRate;
         this.decayRate = 2;
-        this.thresHold = 0.001;
-        this.maxSteps = 1000;
+        this.thresHold = 0.005;
+        this.maxSteps = 100;
         this.initializer = new mathUtil_1.Initializer(this.outputs.length, this.inputs.length);
     }
 }
