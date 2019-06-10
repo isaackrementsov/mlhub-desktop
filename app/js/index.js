@@ -26,9 +26,14 @@ if(getWindowPath() == 'index'){
     });
 }else if(getWindowPath() == 'home'){
     document.getElementById('learn').addEventListener('click', () => {
+        let display = document.getElementById('learning-content');
+
         electron.ipcRenderer.send('start-learning');
         electron.ipcRenderer.on('started-learning', () => {
-            document.getElementById('learning-content').innerHTML = 'Learning';
+            display.innerHTML = 'Learning';
+        });
+        electron.ipcRenderer.on('learning-update', data => {
+            display.innerHTML = data;
         });
     });
 }
@@ -58,7 +63,6 @@ function registerComputer(){
         if(res.authKey != null){
             electron.ipcRenderer.send('computer-data-request', {name: res.computer.name, authKey: res.authKey});
             electron.ipcRenderer.on('computer-data-added', () => {
-                console.log('event');
                 redirect('home');
             });
         }else{

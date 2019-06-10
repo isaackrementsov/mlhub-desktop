@@ -36,7 +36,7 @@ export default class Main {
 
         ejse.data('validAuthKey', Storage.instance.get('validAuthKey', true));
         ejse.listen();
-        
+
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
         Main.mainWindow.on('closed', Main.onClose);
@@ -54,8 +54,12 @@ export default class Main {
         });
 
         ipcMain.on('start-learning', (e) => {
-            let network : NeuralNetwork = new NeuralNetwork();
-            network.start();
+            let sess : number = Storage.instance.get('session', false);
+            sess++;
+            Storage.instance.set('session', sess, false);
+            
+            new NeuralNetwork(sess);
+
             e.reply('started-learning');
         });
 

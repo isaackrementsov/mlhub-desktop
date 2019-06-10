@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const ejse = require("ejs-electron");
 const NeuralNetwork_1 = require("./network/NeuralNetwork");
+const Storage_1 = require("./web/Storage");
 class Main {
     static render(filename) {
         Main.mainWindow.loadURL(`file://${__dirname}/../app/views/${filename}.ejs`);
@@ -24,9 +25,7 @@ class Main {
                 nodeIntegration: true
             }
         });
-        if (!ejse.data('validAuthKey')) {
-            ejse.data('validAuthKey', false);
-        }
+        ejse.data('validAuthKey', Storage_1.default.instance.get('validAuthKey', true));
         ejse.listen();
         Main.render('index');
         //Main.mainWindow.webContents.openDevTools();
@@ -48,6 +47,8 @@ class Main {
         electron_1.ipcMain.on('computer-data-request', (e, data) => {
             ejse.data('computer', data.name);
             ejse.data('validAuthKey', data.authKey);
+            Storage_1.default.instance.set('computer', data.name, false);
+            Storage_1.default.instance.set('validAuthKey', data.authKey, true);
             e.reply('computer-data-added');
         });
     }

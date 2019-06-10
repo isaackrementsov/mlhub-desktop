@@ -42,7 +42,7 @@ export default class Storage {
         this.appDataPath = app.getPath('appData') + 'storage.json';
         this.password = crypto.randomBytes(32);
 
-        fs.appendFileSync(this.appDataPath, '{authKey: ""}');
+        fs.appendFileSync(this.appDataPath, '{authKey: "", computer: "", session: 0}');
 
         Storage.instance = this;
     }
