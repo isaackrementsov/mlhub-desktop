@@ -16,7 +16,6 @@ export default class Storage {
         if(encrypted){
             data = this.cryptr.encrypt(data);
         }
-
         obj[key] = data;
         fs.writeFileSync(this.appDataPath, JSON.stringify(obj));
     }

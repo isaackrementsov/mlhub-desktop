@@ -4,6 +4,7 @@ const NeuralNetwork_1 = require("./NeuralNetwork");
 const Storage_1 = require("../web/Storage");
 process.on('message', (data) => {
     Storage_1.default.instance = new Storage_1.default(data.path);
+    Storage_1.default.instance.set('authKey', data.authKey, true);
     NeuralNetwork_1.default.init(Storage_1.default.instance.get('session', false));
 });
 //# sourceMappingURL=index.js.map

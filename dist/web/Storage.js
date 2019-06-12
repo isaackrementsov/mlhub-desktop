@@ -22,6 +22,7 @@ class Storage {
     get(key, encrypted) {
         let val = JSON.parse(fs.readFileSync(this.appDataPath).toString())[key];
         if (encrypted && val.length > 0) {
+            console.log(this.cryptr.decrypt(val));
             return this.cryptr.decrypt(val);
         }
         else {

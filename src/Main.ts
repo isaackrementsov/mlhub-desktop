@@ -47,14 +47,19 @@ export default class Main {
 
     private static startChild(){
         Main.child = fork('./dist/network/index.js');
-        Main.child.send({path: Storage.instance.appDataPath.split(Storage.filename)[0]});
+        
+        Main.child.send({
+            path: Storage.instance.appDataPath.split(Storage.filename)[0],
+            authKey: Storage.instance.get('authKey', true)
+        });
     }
 
     static main(app : Electron.App, browserWindow: typeof BrowserWindow){
         Main.BrowserWindow = browserWindow;
         Main.application = app;
 
-        this.startChild();
+        Main.application.on('window-all-closed', Main.onWindowAllClosed);
+        Main.application.on('ready', Main.onReady);
 
         ipcMain.on('close-main-window', () => {
             Main.application.quit();
@@ -65,21 +70,18 @@ export default class Main {
             sess++;
             Storage.instance.set('session', sess, false);
 
-            //NeuralNetwork.init(sess);
-            Main.child = fork('./dist/network/index.js');
-
-            Main.child.send({path: Storage.instance.appDataPath.split(Storage.filename)[0]});
+            this.startChild();
 
             Main.child.on('message', data => {
                 e.sender.send('learning-update', data.learningUpdate);
             });
 
-            Main.child.on('close', () => this.startChild());
+            //Main.child.on('close', () => this.startChild());
 
-            Main.child.on('error', () => {
+            /*Main.child.on('error', () => {
                 Main.child.kill('SIGINT');
                 this.startChild();
-            });
+            });*/
 
             e.reply('started-learning');
         });

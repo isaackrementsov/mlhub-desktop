@@ -34,13 +34,16 @@ class Main {
     }
     static startChild() {
         Main.child = child_process_1.fork('./dist/network/index.js');
-        Main.child.send({ path: Storage_1.default.instance.appDataPath.split(Storage_1.default.filename)[0] });
+        Main.child.send({
+            path: Storage_1.default.instance.appDataPath.split(Storage_1.default.filename)[0],
+            authKey: Storage_1.default.instance.get('authKey', true)
+        });
     }
     static main(app, browserWindow) {
-        console.log('starting');
         Main.BrowserWindow = browserWindow;
         Main.application = app;
-        this.startChild();
+        Main.application.on('window-all-closed', Main.onWindowAllClosed);
+        Main.application.on('ready', Main.onReady);
         electron_1.ipcMain.on('close-main-window', () => {
             Main.application.quit();
         });
@@ -48,17 +51,15 @@ class Main {
             let sess = Storage_1.default.instance.get('session', false);
             sess++;
             Storage_1.default.instance.set('session', sess, false);
-            //NeuralNetwork.init(sess);
-            Main.child = child_process_1.fork('./dist/network/index.js');
-            Main.child.send({ path: Storage_1.default.instance.appDataPath.split(Storage_1.default.filename)[0] });
+            this.startChild();
             Main.child.on('message', data => {
                 e.sender.send('learning-update', data.learningUpdate);
             });
-            Main.child.on('close', () => this.startChild());
-            Main.child.on('error', () => {
+            //Main.child.on('close', () => this.startChild());
+            /*Main.child.on('error', () => {
                 Main.child.kill('SIGINT');
                 this.startChild();
-            });
+            });*/
             e.reply('started-learning');
         });
         electron_1.ipcMain.on('computer-data-request', (e, data) => {

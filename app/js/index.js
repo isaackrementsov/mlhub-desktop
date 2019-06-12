@@ -8,10 +8,6 @@ var key;
 
 init();
 
-if(window.localStorage.getItem('learning')){
-    setupMl();
-}
-
 document.getElementById('close').addEventListener('click', () => {
     electron.ipcRenderer.send('close-main-window');
 });
