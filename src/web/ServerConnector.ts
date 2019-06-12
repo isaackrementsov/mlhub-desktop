@@ -5,7 +5,8 @@ import Storage from './Storage';
 
 export default class ServerConnector {
 
-    private authKey : string;
+    authKey : string;
+    ws : WebSocket;
 
     sendHTTPRequest(verb : string, url : string, cb : (any) => void, query? : string){
         let req = request({
@@ -27,23 +28,23 @@ export default class ServerConnector {
     }
 
     sendWebSocketsRequest(url : string, open : (WebSocket) => void, message? : string, query? : string){
-        let ws : WebSocket = new WebSocket('ws://localhost:8080' + this.getUrl(url, query));
+        this.ws = new WebSocket('ws://localhost' + this.getUrl(url));
 
-        ws.on('open', () => {
-            open(ws);
+        this.ws.on('open', () => {
+            open(this.ws);
         });
 
         if(message) process.send({learningUpdate: message});
     }
 
     listenForWebSocketData(open : (WebSocket) => void, incoming? : (any) => void){
-        let ws = new WebSocket('ws://localhost:8080/api/ws/open?authKey' + this.authKey);
+        this.ws = new WebSocket('ws://localhost/api/ws/open?authKey=' + this.authKey);
 
-        ws.on('open', () => {
-            open(ws);
+        this.ws.on('open', () => {
+            open(this.ws);
         });
 
-        if(incoming) ws.on('message', incoming);
+        if(incoming) this.ws.on('message', incoming);
     }
 
     getUrl(url : string, query? : string){

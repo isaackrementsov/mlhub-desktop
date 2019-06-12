@@ -4,6 +4,7 @@ const electron_1 = require("electron");
 const child_process_1 = require("child_process");
 const ejse = require("ejs-electron");
 const Storage_1 = require("./web/Storage");
+const ServerConnector_1 = require("./web/ServerConnector");
 class Main {
     static render(filename) {
         Main.mainWindow.loadURL(`file://${__dirname}/../app/views/${filename}.ejs`);
@@ -42,6 +43,7 @@ class Main {
     static main(app, browserWindow) {
         Main.BrowserWindow = browserWindow;
         Main.application = app;
+        Main.connection = new ServerConnector_1.default();
         Main.application.on('window-all-closed', Main.onWindowAllClosed);
         Main.application.on('ready', Main.onReady);
         electron_1.ipcMain.on('close-main-window', () => {
@@ -51,15 +53,22 @@ class Main {
             let sess = Storage_1.default.instance.get('session', false);
             sess++;
             Storage_1.default.instance.set('session', sess, false);
-            this.startChild();
-            Main.child.on('message', data => {
-                e.sender.send('learning-update', data.learningUpdate);
+            this.connection.sendWebSocketsRequest('/api/ws/relativeMinimum', ws => {
+                Main.startChild();
+                Main.child.on('message', data => {
+                    if (data.ws) {
+                        ws.send(JSON.stringify(data));
+                    }
+                    else {
+                        e.sender.send('learning-update', data.learningUpdate);
+                    }
+                });
+                Main.child.on('close', () => Main.startChild());
+                Main.child.on('error', () => {
+                    Main.child.kill('SIGINT');
+                    Main.startChild();
+                });
             });
-            //Main.child.on('close', () => this.startChild());
-            /*Main.child.on('error', () => {
-                Main.child.kill('SIGINT');
-                this.startChild();
-            });*/
             e.reply('started-learning');
         });
         electron_1.ipcMain.on('computer-data-request', (e, data) => {

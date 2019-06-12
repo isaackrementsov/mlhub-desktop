@@ -4,11 +4,13 @@ import * as ejse from 'ejs-electron';
 
 import NeuralNetwork from './network/NeuralNetwork';
 import Storage from './web/Storage';
+import ServerConnector from './web/ServerConnector';
 
 export default class Main {
 
     static mainWindow : Electron.BrowserWindow;
     static application : Electron.App;
+    static connection : ServerConnector;
     static child;
     static BrowserWindow;
 
@@ -47,7 +49,7 @@ export default class Main {
 
     private static startChild(){
         Main.child = fork('./dist/network/index.js');
-        
+
         Main.child.send({
             path: Storage.instance.appDataPath.split(Storage.filename)[0],
             authKey: Storage.instance.get('authKey', true)
@@ -57,6 +59,7 @@ export default class Main {
     static main(app : Electron.App, browserWindow: typeof BrowserWindow){
         Main.BrowserWindow = browserWindow;
         Main.application = app;
+        Main.connection = new ServerConnector();
 
         Main.application.on('window-all-closed', Main.onWindowAllClosed);
         Main.application.on('ready', Main.onReady);
@@ -70,18 +73,24 @@ export default class Main {
             sess++;
             Storage.instance.set('session', sess, false);
 
-            this.startChild();
+            this.connection.sendWebSocketsRequest('/api/ws/relativeMinimum', ws => {
+                Main.startChild();
 
-            Main.child.on('message', data => {
-                e.sender.send('learning-update', data.learningUpdate);
+                Main.child.on('message', data => {
+                    if(data.ws){
+                        ws.send(JSON.stringify(data));
+                    }else{
+                        e.sender.send('learning-update', data.learningUpdate);
+                    }
+                });
+
+                Main.child.on('close', () => Main.startChild());
+
+                Main.child.on('error', () => {
+                    Main.child.kill('SIGINT');
+                    Main.startChild();
+                });
             });
-
-            //Main.child.on('close', () => this.startChild());
-
-            /*Main.child.on('error', () => {
-                Main.child.kill('SIGINT');
-                this.startChild();
-            });*/
 
             e.reply('started-learning');
         });

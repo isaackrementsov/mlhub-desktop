@@ -21,20 +21,20 @@ class ServerConnector {
         req.end();
     }
     sendWebSocketsRequest(url, open, message, query) {
-        let ws = new WebSocket('ws://localhost:8080' + this.getUrl(url, query));
-        ws.on('open', () => {
-            open(ws);
+        this.ws = new WebSocket('ws://localhost' + this.getUrl(url));
+        this.ws.on('open', () => {
+            open(this.ws);
         });
         if (message)
             process.send({ learningUpdate: message });
     }
     listenForWebSocketData(open, incoming) {
-        let ws = new WebSocket('ws://localhost:8080/api/ws/open?authKey' + this.authKey);
-        ws.on('open', () => {
-            open(ws);
+        this.ws = new WebSocket('ws://localhost/api/ws/open?authKey=' + this.authKey);
+        this.ws.on('open', () => {
+            open(this.ws);
         });
         if (incoming)
-            ws.on('message', incoming);
+            this.ws.on('message', incoming);
     }
     getUrl(url, query) {
         return query ? `${url}?${query}&&authKey=${this.authKey}` : `${url}?authKey=${this.authKey}`;

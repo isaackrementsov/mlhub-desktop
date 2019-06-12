@@ -28,13 +28,15 @@ class NeuralNetwork {
                             this.minimum = cost;
                             this.minWeights = this.weights;
                             this.minBiases = this.biases;
-                            let w = this.minWeights;
-                            let b = this.minBiases;
-                            let s = this.maxSlope;
-                            this.connection.sendWebSocketsRequest('/api/ws/relativeMinimum', ws => {
-                                ws.send({ cost: cost, slope: s, weights: w, biases: b, session: NeuralNetwork.instance.session });
-                                ws.close();
-                            }, `Relative Minimum found: ${cost}`);
+                            process.send({
+                                ws: true,
+                                cost: cost,
+                                weights: this.minWeights,
+                                biases: this.minBiases,
+                                session: this.session,
+                                authKey: this.connection.authKey
+                            });
+                            process.send({ learningUpdate: `Minimum at ${cost}` });
                         }
                         break;
                     }
@@ -190,10 +192,8 @@ class NeuralNetwork {
                     NeuralNetwork.instance.decayRate = misc.decayRate;
                     NeuralNetwork.instance.maxSteps = misc.maxSteps;
                     NeuralNetwork.instance.layers = misc.layers;
-                    NeuralNetwork.instance.minimum = misc.minimum;
+                    NeuralNetwork.instance.minimum = misc.minimum == null ? -1 : misc.minimum;
                     NeuralNetwork.instance.initializer = new mathUtil_1.Initializer(NeuralNetwork.instance.outputs.length, NeuralNetwork.instance.inputs.length);
-                    NeuralNetwork.instance.connection.listenForWebSocketData(ws => {
-                    });
                     //TODO: fix heap overflow error
                     NeuralNetwork.instance.start();
                 });
