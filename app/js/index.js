@@ -8,6 +8,10 @@ var key;
 
 init();
 
+if(window.localStorage.getItem('learning')){
+    setupMl();
+}
+
 document.getElementById('close').addEventListener('click', () => {
     electron.ipcRenderer.send('close-main-window');
 });
@@ -25,17 +29,7 @@ if(getWindowPath() == 'index'){
         e.preventDefault();
     });
 }else if(getWindowPath() == 'home'){
-    document.getElementById('learn').addEventListener('click', () => {
-        let display = document.getElementById('learning-content');
-
-        electron.ipcRenderer.send('start-learning');
-        electron.ipcRenderer.on('started-learning', () => {
-            display.innerHTML = 'Learning';
-        });
-        electron.ipcRenderer.on('learning-update', data => {
-            display.innerHTML = data;
-        });
-    });
+    document.getElementById('learn').addEventListener('click', setupMl);
 }
 
 function showError(msg){
@@ -52,6 +46,7 @@ function loginWithServer(){
             password.setAttribute('type', 'text');
             submit.value = 'Register';
             message.innerHTML = 'Add a Computer';
+            message.style.color = 'rgb(90,90,90)';
         }else{
             showError('Incorrect Password');
         }
@@ -81,7 +76,7 @@ function ajax(method, url, data, callback){
         }
     }
 
-    xHttp.open(method, `http://localhost:8080${url}?${data}`, true);
+    xHttp.open(method, `http://localhost${url}?${data}`, true);
     xHttp.send();
 }
 
@@ -103,4 +98,23 @@ function init(){
 function getWindowPath(){
     let current = window.location.href.split('/');
     return current[current.length - 1].split('.')[0];
+}
+
+function setupMl(){
+    let display = document.getElementById('learning-content');
+    if(window.localStorage.getItem('learning')){
+        electron.ipcRenderer.send('start-learning');
+        electron.ipcRenderer.on('started-learning', () => {
+            display.innerHTML = 'Learning';
+        });
+    }else{
+        display.innerHTML = 'Learning';
+        window.localStorage.setItem('learning', true);
+    }
+
+
+
+    electron.ipcRenderer.on('learning-update', (_, data) => {
+        display.innerHTML = data;
+    });
 }

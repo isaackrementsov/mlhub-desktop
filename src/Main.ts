@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
+import { fork } from 'child_process';
 import * as ejse from 'ejs-electron';
 
 import NeuralNetwork from './network/NeuralNetwork';
@@ -8,6 +9,7 @@ export default class Main {
 
     static mainWindow : Electron.BrowserWindow;
     static application : Electron.App;
+    static child;
     static BrowserWindow;
 
     private static render(filename){
@@ -30,11 +32,12 @@ export default class Main {
             height: 600,
             frame: false,
             webPreferences: {
-                nodeIntegration: true
+                nodeIntegration: true,
+                nodeIntegrationInWorker: true
             }
         });
 
-        ejse.data('validAuthKey', Storage.instance.get('validAuthKey', true));
+        ejse.data('validAuthKey', Storage.instance.get('authKey', true));
         ejse.listen();
 
         Main.render('index');
@@ -42,12 +45,16 @@ export default class Main {
         Main.mainWindow.on('closed', Main.onClose);
     }
 
+    private static startChild(){
+        Main.child = fork('./dist/network/index.js');
+        Main.child.send({path: Storage.instance.appDataPath.split(Storage.filename)[0]});
+    }
+
     static main(app : Electron.App, browserWindow: typeof BrowserWindow){
         Main.BrowserWindow = browserWindow;
         Main.application = app;
 
-        Main.application.on('window-all-closed', Main.onWindowAllClosed);
-        Main.application.on('ready', Main.onReady);
+        this.startChild();
 
         ipcMain.on('close-main-window', () => {
             Main.application.quit();
@@ -57,8 +64,22 @@ export default class Main {
             let sess : number = Storage.instance.get('session', false);
             sess++;
             Storage.instance.set('session', sess, false);
-            
-            new NeuralNetwork(sess);
+
+            //NeuralNetwork.init(sess);
+            Main.child = fork('./dist/network/index.js');
+
+            Main.child.send({path: Storage.instance.appDataPath.split(Storage.filename)[0]});
+
+            Main.child.on('message', data => {
+                e.sender.send('learning-update', data.learningUpdate);
+            });
+
+            Main.child.on('close', () => this.startChild());
+
+            Main.child.on('error', () => {
+                Main.child.kill('SIGINT');
+                this.startChild();
+            });
 
             e.reply('started-learning');
         });
@@ -68,7 +89,7 @@ export default class Main {
             ejse.data('validAuthKey', data.authKey);
 
             Storage.instance.set('computer', data.name, false);
-            Storage.instance.set('validAuthKey', data.authKey, true);
+            Storage.instance.set('authKey', data.authKey, true);
 
             e.reply('computer-data-added');
         });

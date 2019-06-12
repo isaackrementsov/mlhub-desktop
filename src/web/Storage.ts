@@ -1,24 +1,20 @@
 import * as fs from 'fs';
-import * as crypto from 'crypto';
-
-import app from '../app';
+import Cryptr = require('cryptr');
 
 export default class Storage {
 
-    private appDataPath : string;
-    private password : Buffer;
+    private cryptr : Cryptr;
 
-    private static algorithm = 'aes-256-gcm';
+    appDataPath : string;
 
     static instance : Storage;
+    static filename : string = 'mlhubStorage.json';
 
     set(key : string, data : any, encrypted : boolean){
-        let obj = fs.readFileSync(this.appDataPath).toJSON();
+        let obj = JSON.parse(fs.readFileSync(this.appDataPath).toString());
 
         if(encrypted){
-            let cipher = crypto.createCipher(Storage.algorithm, this.password);
-            data = cipher.update(data, 'utf8', 'hex');
-            data += cipher.final('hex');
+            data = this.cryptr.encrypt(data);
         }
 
         obj[key] = data;
@@ -26,23 +22,21 @@ export default class Storage {
     }
 
     get(key : string, encrypted : boolean) : any {
-        let val : string = fs.readFileSync(this.appDataPath).toJSON()[key];
-
-        if(encrypted){
-            let decipher = crypto.createDecipher(Storage.algorithm, this.password);
-            let data : string = decipher.update(val, 'hex', 'utf8');
-
-            return data + decipher.final('utf8');
+        let val : string = JSON.parse(fs.readFileSync(this.appDataPath).toString())[key];
+        if(encrypted && val.length > 0){
+            return this.cryptr.decrypt(val);
         }else{
             return val;
         }
     }
 
-    constructor(){
-        this.appDataPath = app.getPath('appData') + 'storage.json';
-        this.password = crypto.randomBytes(32);
+    constructor(path : string){
+        this.appDataPath = path + '/' + Storage.filename;
+        this.cryptr = new Cryptr('kdi2jd5f@s');
 
-        fs.appendFileSync(this.appDataPath, '{authKey: "", computer: "", session: 0}');
+        if(!fs.existsSync(this.appDataPath)){
+            fs.writeFileSync(this.appDataPath, '{"authKey": "", "computer": "", "session": 0}');
+        }
 
         Storage.instance = this;
     }

@@ -1,6 +1,5 @@
 import { normalize, normDeriv, sumFunc, Initializer } from './util/mathUtil';
 import { Weight, Bias, Activation } from './util/typeDef';
-import { delay } from './util/misc';
 import ServerConnector from '../web/ServerConnector';
 
 export default class NeuralNetwork {
@@ -32,26 +31,26 @@ export default class NeuralNetwork {
         while(true){
             await this.populate();
             let steps : number = 0;
+            this.slopes = [];
             while(true){
                 steps++;
                 this.learningRate = this.savedLearningRate;
-                this.slopes = [];
                 await this.learn();
                 if(this.maxSlope < this.thresHold || steps > this.maxSteps){
                     let cost : number = this.cost();
                     if(cost < this.minimum || this.minimum == -1){
-                        console.log(cost);
                         this.minimum = cost;
                         this.minWeights = this.weights;
                         this.minBiases = this.biases;
+                        let w = this.minWeights;
+                        let b = this.minBiases;
+                        let s = this.maxSlope;
+
+                        this.connection.sendWebSocketsRequest('/api/ws/relativeMinimum', ws => {
+                             ws.send({cost: cost, slope: s, weights: w, biases: b, session: NeuralNetwork.instance.session});
+                             ws.close();
+                         }, `Relative Minimum found: ${cost}`);
                     }
-
-                    let w = this.minWeights;
-                    let b = this.minBiases;
-
-                    this.connection.sendWebSocketsRequest('/api/ws/relativeMinimum', ws => { ws.send(cost); }, `Relative Minimum found: ${cost}`);
-                    this.connection.sendWebSocketsRequest('/api/ws/biases', ws => { ws.send(b); });
-                    this.connection.sendWebSocketsRequest('/api/ws/weights', ws => { ws.send(w); });
 
                     break;
                 }else if(this.approachingMinimum()){
@@ -108,14 +107,12 @@ export default class NeuralNetwork {
         }
 
         this.slopes.push(this.maxSlope);
+        if(this.slopes.length > 7){
+            this.slopes.splice(0, 1);
+        }
+
         this.biases = newBiases;
         this.weights = newWeights;
-
-        let curr : number = this.maxSlope;
-
-        this.connection.sendWebSocketsRequest('/api/ws/datapoint', ws => {
-            ws.send({value: curr, session: this.session, time: new Date()});
-        }, `Current slope is ${curr}`);
     }
 
     private populate(){
@@ -213,43 +210,41 @@ export default class NeuralNetwork {
         );
     }
 
-    constructor(session : number){
-        this.layers = [3,2,3];
-        this.activations = [];
-        this.sums = [];
-        this.maxSlope = 0;
-        this.minimum = -1;
-        this.session = session;
-        this.connection = new ServerConnector();
-        NeuralNetwork.instance = this; //Only way to access "this" in callbacks
+    static init(session : number){
+        NeuralNetwork.instance = new NeuralNetwork(); //Only way to access "this" in callbacks
+        NeuralNetwork.instance.activations = [];
+        NeuralNetwork.instance.sums = [];
+        NeuralNetwork.instance.biases = [];
+        NeuralNetwork.instance.weights = [];
+        NeuralNetwork.instance.maxSlope = 0;
+        NeuralNetwork.instance.session = session;
+        NeuralNetwork.instance.connection = new ServerConnector();
 
-        NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/biases', biases => {
-            NeuralNetwork.instance.biases = JSON.parse(biases);
+        NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/inputs', inputs => {
+            NeuralNetwork.instance.inputs = inputs;
 
-            NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/weights', weights => {
-                NeuralNetwork.instance.weights = JSON.parse(weights);
+            NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/outputs', outputs => {
+                NeuralNetwork.instance.outputs = outputs;
 
-                NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/inputs', inputs => {
-                    NeuralNetwork.instance.inputs = JSON.parse(inputs);
+                NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/misc', misc => {
+                    NeuralNetwork.instance.learningRate = misc.learningRate;
+                    NeuralNetwork.instance.savedLearningRate = NeuralNetwork.instance.learningRate;
+                    NeuralNetwork.instance.thresHold = misc.thresHold;
+                    NeuralNetwork.instance.decayRate = misc.decayRate;
+                    NeuralNetwork.instance.maxSteps = misc.maxSteps;
+                    NeuralNetwork.instance.layers = misc.layers;
+                    NeuralNetwork.instance.minimum = misc.minimum;
+                    NeuralNetwork.instance.initializer = new Initializer(
+                        NeuralNetwork.instance.outputs.length,
+                        NeuralNetwork.instance.inputs.length
+                    );
 
-                    NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/outputs', outputs => {
-                        NeuralNetwork.instance.outputs = outputs;
+                    NeuralNetwork.instance.connection.listenForWebSocketData(ws => {
 
-                        NeuralNetwork.instance.connection.sendHTTPRequest('GET', '/api/ml/misc', info => {
-                            let misc = JSON.parse(info);
-
-                            NeuralNetwork.instance.learningRate = misc.learningRate;
-                            NeuralNetwork.instance.savedLearningRate = NeuralNetwork.instance.learningRate;
-                            NeuralNetwork.instance.thresHold = misc.thresHold;
-                            NeuralNetwork.instance.decayRate = misc.decayRate;
-                            NeuralNetwork.instance.maxSteps = misc.maxSteps;
-                            NeuralNetwork.instance.initializer = new Initializer(
-                                NeuralNetwork.instance.outputs.length,
-                                NeuralNetwork.instance.inputs.length
-                            );
-                            NeuralNetwork.instance.start();
-                        });
                     });
+
+                    //TODO: fix heap overflow error
+                    NeuralNetwork.instance.start();
                 });
             });
         });

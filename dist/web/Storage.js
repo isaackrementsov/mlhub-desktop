@@ -1,37 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
-const crypto = require("crypto");
-const app_1 = require("../app");
+const Cryptr = require("cryptr");
 class Storage {
-    constructor() {
-        this.appDataPath = app_1.default.getPath('appData') + 'storage.json';
-        this.password = crypto.randomBytes(32);
-        fs.appendFileSync(this.appDataPath, '{authKey: ""}');
+    constructor(path) {
+        this.appDataPath = path + '/' + Storage.filename;
+        this.cryptr = new Cryptr('kdi2jd5f@s');
+        if (!fs.existsSync(this.appDataPath)) {
+            fs.writeFileSync(this.appDataPath, '{"authKey": "", "computer": "", "session": 0}');
+        }
         Storage.instance = this;
     }
     set(key, data, encrypted) {
-        let obj = fs.readFileSync(this.appDataPath).toJSON();
+        let obj = JSON.parse(fs.readFileSync(this.appDataPath).toString());
         if (encrypted) {
-            let cipher = crypto.createCipher(Storage.algorithm, this.password);
-            data = cipher.update(data, 'utf8', 'hex');
-            data += cipher.final('hex');
+            data = this.cryptr.encrypt(data);
         }
         obj[key] = data;
         fs.writeFileSync(this.appDataPath, JSON.stringify(obj));
     }
     get(key, encrypted) {
-        let val = fs.readFileSync(this.appDataPath).toJSON()[key];
-        if (encrypted) {
-            let decipher = crypto.createDecipher(Storage.algorithm, this.password);
-            let data = decipher.update(val, 'hex', 'utf8');
-            return data + decipher.final('utf8');
+        let val = JSON.parse(fs.readFileSync(this.appDataPath).toString())[key];
+        if (encrypted && val.length > 0) {
+            return this.cryptr.decrypt(val);
         }
         else {
             return val;
         }
     }
 }
-Storage.algorithm = 'aes-256-gcm';
+Storage.filename = 'mlhubStorage.json';
 exports.default = Storage;
 //# sourceMappingURL=Storage.js.map
