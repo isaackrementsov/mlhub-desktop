@@ -72,7 +72,7 @@ function ajax(method, url, data, callback){
         }
     }
 
-    xHttp.open(method, `http://localhost${url}?${data}`, true);
+    xHttp.open(method, `http://mlhubcvu.us.to${url}?${data}`, true);
     xHttp.send();
 }
 

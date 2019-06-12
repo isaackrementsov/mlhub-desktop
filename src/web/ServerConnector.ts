@@ -10,7 +10,7 @@ export default class ServerConnector {
 
     sendHTTPRequest(verb : string, url : string, cb : (any) => void, query? : string){
         let req = request({
-            hostname: 'localhost',
+            hostname: 'mlhubcvu.us.to',
             method: verb,
             path: this.getUrl(url, query)
         }, res => {
@@ -28,7 +28,7 @@ export default class ServerConnector {
     }
 
     sendWebSocketsRequest(url : string, open : (WebSocket) => void, message? : string, query? : string){
-        this.ws = new WebSocket('ws://localhost' + this.getUrl(url));
+        this.ws = new WebSocket('ws://mlhubcvu.us.to' + this.getUrl(url));
 
         this.ws.on('open', () => {
             open(this.ws);
@@ -38,7 +38,7 @@ export default class ServerConnector {
     }
 
     listenForWebSocketData(open : (WebSocket) => void, incoming? : (any) => void){
-        this.ws = new WebSocket('ws://localhost/api/ws/open?authKey=' + this.authKey);
+        this.ws = new WebSocket('ws://mlhubcvu.us.to/api/ws/open?authKey=' + this.authKey);
 
         this.ws.on('open', () => {
             open(this.ws);
